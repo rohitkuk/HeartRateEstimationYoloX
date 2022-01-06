@@ -5,7 +5,7 @@ import cv2
 from loguru import logger
 import sys
 
-from yolox.exp.build import get_exp_by_name
+from yolox.exp.build import get_exp_by_name, get_exp_by_file
 from yolox.data.data_augment import ValTransform
 from yolox.data.datasets import COCO_CLASSES
 from yolox.utils import postprocess, vis
@@ -23,7 +23,8 @@ class Predictor():
     def __init__(self, model='yolox-s', ckpt='yolox_s.pth', visual=True):
         super(Predictor, self).__init__()
         self.device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
-        self.exp = get_exp_by_name(model)
+        # self.exp = get_exp_by_name(model)
+        self.exp = get_exp_by_file(model)
         self.test_size = self.exp.test_size  
         self.model = self.exp.get_model()
         self.model.to(self.device)
@@ -77,8 +78,8 @@ class Predictor():
     
 
 if __name__=='__main__':
-    model='yolox-s'
-    ckpt='weights/yolox_s.pth'
+    model='/content/HeartRateEstimationYoloX/exps/example/yolox_voc/yolox_voc_s.py'
+    ckpt='weights/latest_ckpt.pth.tar'
     detector = Predictor(model, ckpt)
 
     cap = cv2.VideoCapture(sys.argv[1]) 
