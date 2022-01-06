@@ -5,11 +5,11 @@
 # Copyright (c) Bharath Hariharan.
 # Copyright (c) Megvii, Inc. and its affiliates.
 
+import numpy as np
+
 import os
 import pickle
 import xml.etree.ElementTree as ET
-
-import numpy as np
 
 
 def parse_rec(filename):
@@ -106,7 +106,7 @@ def voc_eval(
     class_recs = {}
     npos = 0
     for imagename in imagenames:
-        R = [obj for obj in recs[imagename] if obj["name"] == classname]
+        R = [obj for obj in recs[imagename] if obj["name"].lower().strip() == classname]
         bbox = np.array([x["bbox"] for x in R])
         difficult = np.array([x["difficult"] for x in R]).astype(np.bool)
         det = [False] * len(R)

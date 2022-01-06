@@ -1,6 +1,6 @@
 # YOLOX-TensorRT in Python
 
-This tutorial includes a Python demo for TensorRT.
+This toturial includes a Python demo for TensorRT.
 
 ## Install TensorRT Toolkit
 
@@ -16,7 +16,7 @@ YOLOX models can be easily conveted to TensorRT models using torch2trt
    ```
    For example:
    ```shell
-   python tools/trt.py -n yolox-s -c your_ckpt.pth
+   python tools/trt.py -n yolox-s -c your_ckpt.pth.tar
    ```
    <YOLOX_MODEL_NAME> can be: yolox-nano, yolox-tiny. yolox-s, yolox-m, yolox-l, yolox-x.
 
@@ -26,7 +26,7 @@ YOLOX models can be easily conveted to TensorRT models using torch2trt
    ```
    For example:
    ```shell
-   python tools/trt.py -f /path/to/your/yolox/exps/yolox_s.py -c your_ckpt.pth
+   python tools/trt.py -f /path/to/your/yolox/exps/yolox_s.py -c your_ckpt.pth.tar
    ```
    *yolox_s.py* can be any exp file modified by you.
 

@@ -2,10 +2,6 @@
 # -*- coding:utf-8 -*-
 # Copyright (c) Megvii, Inc. and its affiliates.
 
-import sys
-import tempfile
-import time
-from collections import ChainMap
 from loguru import logger
 from tqdm import tqdm
 
@@ -14,6 +10,11 @@ import numpy as np
 import torch
 
 from yolox.utils import gather, is_main_process, postprocess, synchronize, time_synchronized
+
+import sys
+import tempfile
+import time
+from collections import ChainMap
 
 
 class VOCEvaluator:
@@ -79,7 +80,7 @@ class VOCEvaluator:
 
         inference_time = 0
         nms_time = 0
-        n_samples = max(len(self.dataloader) - 1, 1)
+        n_samples = len(self.dataloader) - 1
 
         if trt_file is not None:
             from torch2trt import TRTModule

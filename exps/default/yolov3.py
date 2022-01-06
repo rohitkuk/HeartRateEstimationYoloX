@@ -3,7 +3,6 @@
 # Copyright (c) Megvii, Inc. and its affiliates.
 
 import os
-
 import torch
 import torch.nn as nn
 
@@ -33,3 +32,58 @@ class Exp(MyExp):
 
         return self.model
 
+    def get_data_loader(self, batch_size, is_distributed, no_aug=False):
+        from data.datasets.cocodataset import COCODataset
+        from data.datasets.mosaicdetection import MosaicDetection
+        from data.datasets.data_augment import TrainTransform
+        from data.datasets.dataloading import YoloBatchSampler, DataLoader, InfiniteSampler
+        import torch.distributed as dist
+
+        dataset = COCODataset(
+                data_dir='data/COCO/',
+                json_file=self.train_ann,
+                img_size=self.input_size,
+                preproc=TrainTransform(
+                    rgb_means=(0.485, 0.456, 0.406),
+                    std=(0.229, 0.224, 0.225),
+                    max_labels=50
+                ),
+        )
+
+        dataset = MosaicDetection(
+            dataset,
+            mosaic=not no_aug,
+            img_size=self.input_size,
+            preproc=TrainTransform(
+                rgb_means=(0.485, 0.456, 0.406),
+                std=(0.229, 0.224, 0.225),
+                max_labels=120
+            ),
+            degrees=self.degrees,
+            translate=self.translate,
+            scale=self.scale,
+            shear=self.shear,
+            perspective=self.perspective,
+        )
+
+        self.dataset = dataset
+
+        if is_distributed:
+            batch_size = batch_size // dist.get_world_size()
+            sampler = InfiniteSampler(len(self.dataset), seed=self.seed if self.seed else 0)
+        else:
+            sampler = torch.utils.data.RandomSampler(self.dataset)
+
+        batch_sampler = YoloBatchSampler(
+            sampler=sampler,
+            batch_size=batch_size,
+            drop_last=False,
+            input_dimension=self.input_size,
+            mosaic=not no_aug
+        )
+
+        dataloader_kwargs = {"num_workers": self.data_num_workers, "pin_memory": True}
+        dataloader_kwargs["batch_sampler"] = batch_sampler
+        train_loader = DataLoader(self.dataset, **dataloader_kwargs)
+
+        return train_loader

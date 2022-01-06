@@ -64,7 +64,9 @@ if __name__ == '__main__':
 
     input_shape = tuple(map(int, args.input_shape.split(',')))
     origin_img = cv2.imread(args.image_path)
-    img, ratio = preprocess(origin_img, input_shape)
+    mean = (0.485, 0.456, 0.406)
+    std = (0.229, 0.224, 0.225)
+    img, ratio = preprocess(origin_img, input_shape, mean, std)
 
     session = onnxruntime.InferenceSession(args.model)
 

@@ -2,19 +2,20 @@
 # -*- coding:utf-8 -*-
 # Copyright (c) Megvii, Inc. and its affiliates.
 
-import argparse
-import os
-import time
 from loguru import logger
 
 import cv2
 
 import torch
 
-from yolox.data.data_augment import ValTransform
+from yolox.data.data_augment import preproc
 from yolox.data.datasets import COCO_CLASSES
 from yolox.exp import get_exp
 from yolox.utils import fuse_model, get_model_info, postprocess, vis
+
+import argparse
+import os
+import time
 
 IMAGE_EXT = [".jpg", ".jpeg", ".webp", ".bmp", ".png"]
 
@@ -43,7 +44,7 @@ def make_parser():
         "--exp_file",
         default=None,
         type=str,
-        help="pls input your experiment description file",
+        help="pls input your expriment description file",
     )
     parser.add_argument("-c", "--ckpt", default=None, type=str, help="ckpt for eval")
     parser.add_argument(
@@ -52,8 +53,8 @@ def make_parser():
         type=str,
         help="device to run our model, can either be cpu or gpu",
     )
-    parser.add_argument("--conf", default=0.3, type=float, help="test conf")
-    parser.add_argument("--nms", default=0.3, type=float, help="test nms threshold")
+    parser.add_argument("--conf", default=None, type=float, help="test conf")
+    parser.add_argument("--nms", default=None, type=float, help="test nms threshold")
     parser.add_argument("--tsize", default=None, type=int, help="test img size")
     parser.add_argument(
         "--fp16",
@@ -61,13 +62,6 @@ def make_parser():
         default=False,
         action="store_true",
         help="Adopting mix precision evaluating.",
-    )
-    parser.add_argument(
-        "--legacy",
-        dest="legacy",
-        default=False,
-        action="store_true",
-        help="To be compatible with older versions",
     )
     parser.add_argument(
         "--fuse",
@@ -106,8 +100,6 @@ class Predictor(object):
         trt_file=None,
         decoder=None,
         device="cpu",
-        fp16=False,
-        legacy=False,
     ):
         self.model = model
         self.cls_names = cls_names
@@ -117,8 +109,6 @@ class Predictor(object):
         self.nmsthre = exp.nmsthre
         self.test_size = exp.test_size
         self.device = device
-        self.fp16 = fp16
-        self.preproc = ValTransform(legacy=legacy)
         if trt_file is not None:
             from torch2trt import TRTModule
 
@@ -128,6 +118,8 @@ class Predictor(object):
             x = torch.ones(1, 3, exp.test_size[0], exp.test_size[1]).cuda()
             self.model(x)
             self.model = model_trt
+        self.rgb_means = (0.485, 0.456, 0.406)
+        self.std = (0.229, 0.224, 0.225)
 
     def inference(self, img):
         img_info = {"id": 0}
@@ -142,16 +134,11 @@ class Predictor(object):
         img_info["width"] = width
         img_info["raw_img"] = img
 
-        ratio = min(self.test_size[0] / img.shape[0], self.test_size[1] / img.shape[1])
+        img, ratio = preproc(img, self.test_size, self.rgb_means, self.std)
         img_info["ratio"] = ratio
-
-        img, _ = self.preproc(img, None, self.test_size)
         img = torch.from_numpy(img).unsqueeze(0)
-        img = img.float()
         if self.device == "gpu":
             img = img.cuda()
-            if self.fp16:
-                img = img.half()  # to FP16
 
         with torch.no_grad():
             t0 = time.time()
@@ -159,8 +146,7 @@ class Predictor(object):
             if self.decoder is not None:
                 outputs = self.decoder(outputs, dtype=outputs.type())
             outputs = postprocess(
-                outputs, self.num_classes, self.confthre,
-                self.nmsthre, class_agnostic=True
+                outputs, self.num_classes, self.confthre, self.nmsthre
             )
             logger.info("Infer time: {:.4f}s".format(time.time() - t0))
         return outputs, img_info
@@ -244,7 +230,6 @@ def main(exp, args):
     file_name = os.path.join(exp.output_dir, args.experiment_name)
     os.makedirs(file_name, exist_ok=True)
 
-    vis_folder = None
     if args.save_result:
         vis_folder = os.path.join(file_name, "vis_res")
         os.makedirs(vis_folder, exist_ok=True)
@@ -266,13 +251,11 @@ def main(exp, args):
 
     if args.device == "gpu":
         model.cuda()
-        if args.fp16:
-            model.half()  # to FP16
     model.eval()
 
     if not args.trt:
         if args.ckpt is None:
-            ckpt_file = os.path.join(file_name, "best_ckpt.pth")
+            ckpt_file = os.path.join(file_name, "best_ckpt.pth.tar")
         else:
             ckpt_file = args.ckpt
         logger.info("loading checkpoint")
@@ -298,7 +281,7 @@ def main(exp, args):
         trt_file = None
         decoder = None
 
-    predictor = Predictor(model, exp, COCO_CLASSES, trt_file, decoder, args.device, args.fp16, args.legacy)
+    predictor = Predictor(model, exp, COCO_CLASSES, trt_file, decoder, args.device)
     current_time = time.localtime()
     if args.demo == "image":
         image_demo(predictor, vis_folder, args.path, current_time, args.save_result)

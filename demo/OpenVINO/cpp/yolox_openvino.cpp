@@ -23,7 +23,6 @@ using namespace InferenceEngine;
 
 static const int INPUT_W = 416;
 static const int INPUT_H = 416;
-static const int NUM_CLASSES = 80; // COCO has 80 classes. Modify this value on your own dataset.
 
 cv::Mat static_resize(cv::Mat& img) {
     float r = std::min(INPUT_W / (img.cols*1.0), INPUT_H / (img.rows*1.0));
@@ -32,16 +31,18 @@ cv::Mat static_resize(cv::Mat& img) {
     int unpad_h = r * img.rows;
     cv::Mat re(unpad_h, unpad_w, CV_8UC3);
     cv::resize(img, re, re.size());
-    //cv::Mat out(INPUT_W, INPUT_H, CV_8UC3, cv::Scalar(114, 114, 114));
-    cv::Mat out(INPUT_H, INPUT_W, CV_8UC3, cv::Scalar(114, 114, 114));
+    cv::Mat out(INPUT_W, INPUT_H, CV_8UC3, cv::Scalar(114, 114, 114));
     re.copyTo(out(cv::Rect(0, 0, re.cols, re.rows)));
     return out;
 }
 
 void blobFromImage(cv::Mat& img, Blob::Ptr& blob){
+    cv::cvtColor(img, img, cv::COLOR_BGR2RGB);
     int channels = 3;
     int img_h = img.rows;
     int img_w = img.cols;
+    std::vector<float> mean = {0.485, 0.456, 0.406};
+    std::vector<float> std = {0.229, 0.224, 0.225};
     InferenceEngine::MemoryBlob::Ptr mblob = InferenceEngine::as<InferenceEngine::MemoryBlob>(blob);
     if (!mblob) 
     {
@@ -60,7 +61,7 @@ void blobFromImage(cv::Mat& img, Blob::Ptr& blob){
             for (size_t w = 0; w < img_w; w++) 
             {
                 blob_data[c * img_w * img_h + h * img_w + w] =
-                    (float)img.at<cv::Vec3b>(h, w)[c];
+                    (((float)img.at<cv::Vec3b>(h, w)[c]) / 255.0f - mean[c]) / std[c];
             }
         }
     }
@@ -81,15 +82,14 @@ struct GridAndStride
     int stride;
 };
 
-static void generate_grids_and_stride(const int target_w, const int target_h, std::vector<int>& strides, std::vector<GridAndStride>& grid_strides)
+static void generate_grids_and_stride(const int target_size, std::vector<int>& strides, std::vector<GridAndStride>& grid_strides)
 {
     for (auto stride : strides)
     {
-        int num_grid_w = target_w / stride;
-        int num_grid_h = target_h / stride;
-        for (int g1 = 0; g1 < num_grid_h; g1++)
+        int num_grid = target_size / stride;
+        for (int g1 = 0; g1 < num_grid; g1++)
         {
-            for (int g0 = 0; g0 < num_grid_w; g0++)
+            for (int g0 = 0; g0 < num_grid; g0++)
             {
                 grid_strides.push_back((GridAndStride){g0, g1, stride});
             }
@@ -100,6 +100,7 @@ static void generate_grids_and_stride(const int target_w, const int target_h, st
 
 static void generate_yolox_proposals(std::vector<GridAndStride> grid_strides, const float* feat_ptr, float prob_threshold, std::vector<Object>& objects)
 {
+    const int num_class = 80;  // COCO has 80 classes. Modify this value on your own dataset.
 
     const int num_anchors = grid_strides.size();
 
@@ -109,7 +110,7 @@ static void generate_yolox_proposals(std::vector<GridAndStride> grid_strides, co
         const int grid1 = grid_strides[anchor_idx].grid1;
         const int stride = grid_strides[anchor_idx].stride;
 
-	const int basic_pos = anchor_idx * (NUM_CLASSES + 5);
+	const int basic_pos = anchor_idx * 85;
 
         // yolox/models/yolo_head.py decode logic
         //  outputs[..., :2] = (outputs[..., :2] + grids) * strides
@@ -122,7 +123,7 @@ static void generate_yolox_proposals(std::vector<GridAndStride> grid_strides, co
         float y0 = y_center - h * 0.5f;
 
         float box_objectness = feat_ptr[basic_pos + 4];
-        for (int class_idx = 0; class_idx < NUM_CLASSES; class_idx++)
+        for (int class_idx = 0; class_idx < num_class; class_idx++)
         {
             float box_cls_score = feat_ptr[basic_pos + 5 + class_idx];
             float box_prob = box_objectness * box_cls_score;
@@ -236,7 +237,7 @@ static void decode_outputs(const float* prob, std::vector<Object>& objects, floa
         std::vector<int> strides = {8, 16, 32};
         std::vector<GridAndStride> grid_strides;
 
-        generate_grids_and_stride(INPUT_W, INPUT_H, strides, grid_strides);
+        generate_grids_and_stride(INPUT_W, strides, grid_strides);
         generate_yolox_proposals(grid_strides, prob,  BBOX_CONF_THRESH, proposals);
         qsort_descent_inplace(proposals);
 
@@ -512,6 +513,7 @@ int main(int argc, char* argv[]) {
         auto moutputHolder = moutput->rmap();
         const float* net_pred = moutputHolder.as<const PrecisionTrait<Precision::FP32>::value_type*>();
         
+        const int image_size = 416;
 	    int img_w = image.cols;
         int img_h = image.rows;
 	    float scale = std::min(INPUT_W / (image.cols*1.0), INPUT_H / (image.rows*1.0));

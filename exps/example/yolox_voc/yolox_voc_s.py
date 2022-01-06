@@ -1,12 +1,12 @@
 # encoding: utf-8
 import os
-
+import random
 import torch
+import torch.nn as nn
 import torch.distributed as dist
 
-from yolox.data import get_yolox_datadir
 from yolox.exp import Exp as MyExp
-
+from yolox.data import get_yolox_datadir
 
 class Exp(MyExp):
     def __init__(self):
@@ -14,17 +14,9 @@ class Exp(MyExp):
         self.num_classes = 20
         self.depth = 0.33
         self.width = 0.50
-        self.warmup_epochs = 1
-
-        # ---------- transform config ------------ #
-        self.mosaic_prob = 1.0
-        self.mixup_prob = 1.0
-        self.hsv_prob = 1.0
-        self.flip_prob = 0.5
-
         self.exp_name = os.path.split(os.path.realpath(__file__))[1].split(".")[0]
 
-    def get_data_loader(self, batch_size, is_distributed, no_aug=False, cache_img=False):
+    def get_data_loader(self, batch_size, is_distributed, no_aug=False):
         from yolox.data import (
             VOCDetection,
             TrainTransform,
@@ -32,43 +24,34 @@ class Exp(MyExp):
             DataLoader,
             InfiniteSampler,
             MosaicDetection,
-            worker_init_reset_seed,
         )
-        from yolox.utils import (
-            wait_for_the_master,
-            get_local_rank,
-        )
-        local_rank = get_local_rank()
 
-        with wait_for_the_master(local_rank):
-            dataset = VOCDetection(
-                data_dir=os.path.join(get_yolox_datadir(), "VOCdevkit"),
-                image_sets=[('2007', 'trainval'), ('2012', 'trainval')],
-                img_size=self.input_size,
-                preproc=TrainTransform(
-                    max_labels=50,
-                    flip_prob=self.flip_prob,
-                    hsv_prob=self.hsv_prob),
-                cache=cache_img,
-            )
+        dataset = VOCDetection(
+            data_dir=os.path.join(get_yolox_datadir(), "VOCdevkit"),
+            image_sets=[('2007', 'trainval'), ('2012', 'trainval')],
+            img_size=self.input_size,
+            preproc=TrainTransform(
+                rgb_means=(0.485, 0.456, 0.406),
+                std=(0.229, 0.224, 0.225),
+                max_labels=50,
+            ),
+        )
 
         dataset = MosaicDetection(
             dataset,
             mosaic=not no_aug,
             img_size=self.input_size,
             preproc=TrainTransform(
+                rgb_means=(0.485, 0.456, 0.406),
+                std=(0.229, 0.224, 0.225),
                 max_labels=120,
-                flip_prob=self.flip_prob,
-                hsv_prob=self.hsv_prob),
+            ),
             degrees=self.degrees,
             translate=self.translate,
-            mosaic_scale=self.mosaic_scale,
-            mixup_scale=self.mixup_scale,
+            scale=self.scale,
             shear=self.shear,
             perspective=self.perspective,
             enable_mixup=self.enable_mixup,
-            mosaic_prob=self.mosaic_prob,
-            mixup_prob=self.mixup_prob,
         )
 
         self.dataset = dataset
@@ -84,27 +67,27 @@ class Exp(MyExp):
             sampler=sampler,
             batch_size=batch_size,
             drop_last=False,
+            input_dimension=self.input_size,
             mosaic=not no_aug,
         )
 
         dataloader_kwargs = {"num_workers": self.data_num_workers, "pin_memory": True}
         dataloader_kwargs["batch_sampler"] = batch_sampler
-
-        # Make sure each process has different random seed, especially for 'fork' method
-        dataloader_kwargs["worker_init_fn"] = worker_init_reset_seed
-
         train_loader = DataLoader(self.dataset, **dataloader_kwargs)
 
         return train_loader
 
-    def get_eval_loader(self, batch_size, is_distributed, testdev=False, legacy=False):
+    def get_eval_loader(self, batch_size, is_distributed, testdev=False):
         from yolox.data import VOCDetection, ValTransform
 
         valdataset = VOCDetection(
             data_dir=os.path.join(get_yolox_datadir(), "VOCdevkit"),
             image_sets=[('2007', 'test')],
             img_size=self.test_size,
-            preproc=ValTransform(legacy=legacy),
+            preproc=ValTransform(
+                rgb_means=(0.485, 0.456, 0.406),
+                std=(0.229, 0.224, 0.225),
+            ),
         )
 
         if is_distributed:
@@ -125,10 +108,10 @@ class Exp(MyExp):
 
         return val_loader
 
-    def get_evaluator(self, batch_size, is_distributed, testdev=False, legacy=False):
+    def get_evaluator(self, batch_size, is_distributed, testdev=False):
         from yolox.evaluators import VOCEvaluator
 
-        val_loader = self.get_eval_loader(batch_size, is_distributed, testdev, legacy)
+        val_loader = self.get_eval_loader(batch_size, is_distributed, testdev=testdev)
         evaluator = VOCEvaluator(
             dataloader=val_loader,
             img_size=self.test_size,
