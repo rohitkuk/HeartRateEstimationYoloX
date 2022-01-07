@@ -343,7 +343,7 @@ def UI_box2(x, img, color=None,label=None,line_thickness=None, boundingbox = Tru
     if label:
         tf = max(tl - 1, 1)  # font thickness
         t_size = cv2.getTextSize(label, 0, fontScale=tl / 3, thickness=tf)[0]
-        img = draw_border(img, (c1[0], c1[1] - t_size[1] -3), (c1[0] + t_size[0], c1[1]+3), color, tl)
+        img = draw_border(img, (c1[0], c1[1] - t_size[1] -3), (c1[0] + t_size[0], c1[1]+3), color, tf, 8, 2)
         cv2.putText(img, label, (c1[0], c1[1] - 2), 0, tl / 3, [225, 255, 255], thickness=tf, lineType=cv2.LINE_AA)
 
 

@@ -102,10 +102,10 @@ if __name__=='__main__':
         UI_box(x, frame, (211, 232, 21), label, 4, False)
         t1 = time_synchronized()
         if ret_val:
-            # try:
-            _,info = detector.inference(frame, visual=True)
-            # except:
-            #     pass
+            try:
+                _,info = detector.inference(frame, visual=True)
+            except:
+                pass
             vid_writer.write(info['visual'])
             if frame_count == 1000:
                 break
