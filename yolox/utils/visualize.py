@@ -6,6 +6,7 @@ import cv2
 import numpy as np
 from numpy import random
 from collections import deque
+import cvzone
 
 
 
@@ -64,8 +65,29 @@ def vis2(img, boxes, scores, cls_ids, conf=0.5, class_names=None):
 
     return img
 
+def vid_to_frames(path):
+    frames = []
+    cap = cv2.VideoCapture(path)
+    ret = True
+    while ret:
+        ret, img = cap.read() # read one frame from the 'capture' object; img is (H, W, C)
+        if ret:
+            frames.append(img)
+    return frames
+
+emojidict = dict(
+    happy = vid_to_frames('assets/happy.png'),
+    sad = vid_to_frames('assets/sad.png'),
+    surprised = vid_to_frames('assets/surprised.png')       
+    )
+current = None
+count = 0
+
 
 def vis10(img, boxes, scores, cls_ids, conf=0.5, class_names=None):
+
+    global current
+    global count
 
     for i in range(len(boxes)):
         box = boxes[i]
@@ -73,8 +95,16 @@ def vis10(img, boxes, scores, cls_ids, conf=0.5, class_names=None):
         score = scores[i]
         if score < conf:
             continue
-        
-        UI_box2(box, img, color=compute_color_for_labels(cls_id),label=class_names[cls_id],line_thickness=2)
+        label = class_names[cls_id]
+        UI_box2(box, img, color=compute_color_for_labels(cls_id),label=label,line_thickness=2)
+        if count == len(emojidict[label]):
+            count = 0 
+        if label == current:
+            count +=1
+        elif label != current:
+            count = 0 
+        img = cvzone.overlayPNG(img, emojidict[label][count] ,(int(box[0]), int(box[1])))
+        current = label
         
     return img
 
@@ -102,7 +132,7 @@ def vis3(img, boxes, scores, cls_ids, conf=0.5, class_names=None, reader = None)
                         text = res[1]
 
         UI_box(box, img, color=compute_color_for_labels(cls_id),label=class_names[cls_id] + text ,line_thickness=2)
-
+        
     return img
 
 

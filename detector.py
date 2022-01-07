@@ -96,10 +96,10 @@ if __name__=='__main__':
     
     while True:
         ret_val, frame = cap.read() # read frame from video
-        x = [100, 100, 200, 200]
+        x = [50, 50, 100, 100]
         c1, c2 = (int(x[0]), int(x[1])), (int(x[2]), int(x[3]))
         label = "FPS: %.2f"%(fps)
-        UI_box(x, frame, (211, 232, 21), label, 4, False)
+        UI_box(x, frame, (211, 232, 21), label, 2, False)
         t1 = time_synchronized()
         if ret_val:
             try:
