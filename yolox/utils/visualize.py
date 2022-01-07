@@ -76,9 +76,9 @@ def vid_to_frames(path):
     return frames
 
 emojidict = dict(
-    happy = vid_to_frames('assets/happy.png'),
-    sad = vid_to_frames('assets/sad.png'),
-    surprised = vid_to_frames('assets/surprised.png')       
+    happy = vid_to_frames('assets/happy.png',cv2.IMREAD_UNCHANGED),
+    sad = vid_to_frames('assets/sad.png',cv2.IMREAD_UNCHANGED),
+    surprised = vid_to_frames('assets/surprised.png',cv2.IMREAD_UNCHANGED)       
     )
 current = None
 count = 0
