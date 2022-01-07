@@ -33,7 +33,7 @@ realHeight = 240
 videoWidth = 160
 videoHeight = 120
 videoChannels = 3
-videoFrameRate = 15
+videoFrameRate = 30
 webcam.set(3, realWidth);
 webcam.set(4, realHeight);
 

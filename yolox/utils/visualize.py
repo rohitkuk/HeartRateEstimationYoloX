@@ -60,7 +60,22 @@ def vis2(img, boxes, scores, cls_ids, conf=0.5, class_names=None):
             continue
         
         UI_box(box, img, color=compute_color_for_labels(cls_id),label=class_names[cls_id],line_thickness=2)
+        
 
+    return img
+
+
+def vis10(img, boxes, scores, cls_ids, conf=0.5, class_names=None):
+
+    for i in range(len(boxes)):
+        box = boxes[i]
+        cls_id = int(cls_ids[i])
+        score = scores[i]
+        if score < conf:
+            continue
+        
+        UI_box2(box, img, color=compute_color_for_labels(cls_id),label=class_names[cls_id],line_thickness=2)
+        
     return img
 
 
@@ -284,6 +299,8 @@ def UI_box(x, img, color=None,label=None,line_thickness=None, boundingbox = True
         cv2.putText(img, label, (c1[0], c1[1] - 2), 0, tl / 3, [225, 255, 255], thickness=tf, lineType=cv2.LINE_AA)
 
 
+
+
 def draw_border(img, pt1, pt2, color, thickness, r, d):
     x1,y1 = pt1
     x2,y2 = pt2
@@ -314,3 +331,41 @@ def draw_border(img, pt1, pt2, color, thickness, r, d):
     cv2.circle(img, (x2 -r, y2-r), 2, color, 12)
     
     return img
+
+def UI_box2(x, img, color=None,label=None,line_thickness=None, boundingbox = True):
+    # Plots one bounding box on image img
+    tl = line_thickness or round(0.002 * (img.shape[0] + img.shape[1]) / 2) + 1  # line/font thickness
+    color = color or [random.randint(0, 255) for _ in range(3)]
+    c1, c2 = (int(x[0]), int(x[1])), (int(x[2]), int(x[3]))
+    if boundingbox:
+        cv2.rectangle(img, c1, c2, color, 2)
+    if label:
+        tf = max(tl - 1, 1)  # font thickness
+        t_size = cv2.getTextSize(label, 0, fontScale=tl / 3, thickness=tf)[0]
+        img = draw_disconnected_rect(img, (c1[0], c1[1] - t_size[1] -3), (c1[0] + t_size[0], c1[1]+3), color, tl)
+        cv2.putText(img, label, (c1[0], c1[1] - 2), 0, tl / 3, [225, 255, 255], thickness=tf, lineType=cv2.LINE_AA)
+
+
+
+def draw_disconnected_rect( img, pt1, pt2, color, thickness):
+    width = pt2[0] - pt1[0]
+    height = pt2[1] - pt1[1]
+    line_width = min(20, width // 4)
+    line_height = min(20, height // 4)
+    line_length = max(line_width, line_height)
+    cv2.line(img, pt1, (pt1[0] + line_length, pt1[1]), color, thickness)
+    cv2.line(img, pt1, (pt1[0], pt1[1] + line_length), color, thickness)
+    cv2.line(
+        img, (pt2[0] - line_length, pt1[1]), (pt2[0], pt1[1]), color, thickness
+    )
+    cv2.line(
+        img, (pt2[0], pt1[1]), (pt2[0], pt1[1] + line_length), color, thickness
+    )
+    cv2.line(
+        img, (pt1[0], pt2[1]), (pt1[0] + line_length, pt2[1]), color, thickness
+    )
+    cv2.line(
+        img, (pt1[0], pt2[1] - line_length), (pt1[0], pt2[1]), color, thickness
+    )
+    cv2.line(img, pt2, (pt2[0] - line_length, pt2[1]), color, thickness)
+    cv2.line(img, (pt2[0], pt2[1] - line_length), pt2, color, thickness)
