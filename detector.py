@@ -9,7 +9,7 @@ from yolox.exp.build import get_exp_by_name, get_exp_by_file
 from yolox.data.data_augment import ValTransform
 from yolox.data.datasets import COCO_CLASSES
 from yolox.utils import postprocess, vis
-from yolox.utils.visualize import vis2,vis3
+from yolox.utils.visualize import vis2,vis3, vis10
 from yolox.utils.visualize import vis_track, draw_border, UI_box, vis_track8, compute_color_for_labels
 
 def time_synchronized():
@@ -68,7 +68,7 @@ class Predictor():
         img_info['box_nums'] = outputs.shape[0]
 
         if visual:
-            img_info['visual'] = vis2(img_info['img'], img_info['boxes'], img_info['scores'], img_info['class_ids'], conf, COCO_CLASSES)
+            img_info['visual'] = vis10(img_info['img'], img_info['boxes'], img_info['scores'], img_info['class_ids'], conf, COCO_CLASSES)
         
         if logger_:
             logger.info("Infer time: {:.4f}s".format(time.time() - t0))
