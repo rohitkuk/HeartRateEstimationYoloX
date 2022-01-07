@@ -334,7 +334,7 @@ def draw_border(img, pt1, pt2, color, thickness, r, d):
 
 def UI_box2(x, img, color=None,label=None,line_thickness=None, boundingbox = True):
     # Plots one bounding box on image img
-    tl = line_thickness or round(0.020 * (img.shape[0] + img.shape[1]) / 2) + 1  # line/font thickness
+    tl = line_thickness or round(0.30 * (img.shape[0] + img.shape[1]) / 2) + 1  # line/font thickness
     color = color or [random.randint(0, 255) for _ in range(3)]
     c1, c2 = (int(x[0]), int(x[1])), (int(x[2]), int(x[3]))
     if boundingbox:
@@ -351,8 +351,8 @@ def UI_box2(x, img, color=None,label=None,line_thickness=None, boundingbox = Tru
 def draw_disconnected_rect( img, pt1, pt2, color, thickness):
     width = pt2[0] - pt1[0]
     height = pt2[1] - pt1[1]
-    line_width = min(20, width // 3)
-    line_height = min(20, height // 3)
+    line_width = min(30, width // 3)
+    line_height = min(30, height // 3)
     line_length = max(line_width, line_height)
     cv2.line(img, pt1, (pt1[0] + line_length, pt1[1]), color, thickness)
     cv2.line(img, pt1, (pt1[0], pt1[1] + line_length), color, thickness)
