@@ -99,7 +99,7 @@ if __name__=='__main__':
         x = [50, 50, 100, 100]
         c1, c2 = (int(x[0]), int(x[1])), (int(x[2]), int(x[3]))
         label = "FPS: %.2f"%(fps)
-        UI_box(x, frame, (211, 232, 21), label, 2, False)
+        UI_box(x, frame, (211, 232, 21), label, 3, False)
         t1 = time_synchronized()
         if ret_val:
             # try:
