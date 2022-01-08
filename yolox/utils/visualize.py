@@ -92,9 +92,8 @@ def add_image(img, src2, x, y, ):
     src1 = initial
     src2 = cv2.resize(src2, src1.shape[1::-1])
     src2[np.where((src2 ==[0,0,0]).all(axis=2))] = [255,255,255]
-    dst = cv2.bitwise_and(src1, src2)
-    
-    # dst = cv2.addWeighted(src1, 0.2, src2, 0.8, 0)
+    # dst = cv2.bitwise_and(src1, src2)
+    dst = cv2.addWeighted(src1, 0.2, src2, 0.8, 0)
     img[y:y+h,x:x+w] = dst
     return img
 
