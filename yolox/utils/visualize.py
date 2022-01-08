@@ -120,7 +120,7 @@ def vis10(img, boxes, scores, cls_ids, conf=0.5, class_names=None):
         print(emojidict[label][count].shape)
         print(img.shape)
         # img = cvzone.overlayPNG(img, emojidict[label][count] ,(int(box[0]), int(box[1])))
-        img = add_image(img, emojidict[label][count] ,(int(box[0]), int(box[1])))
+        img = add_image(img, emojidict[label][count] ,int(box[0]), int(box[1]) )
         current = label
         
     return img
