@@ -84,8 +84,8 @@ current = None
 count = 0
 
 def add_image(img, src2, x, y, ):
-    x=  x+90
-    y = y-10
+    # x=  x+90
+    # y = y-10
     w = 80
     h = 80
 
@@ -124,8 +124,10 @@ def vis10(img, boxes, scores, cls_ids, conf=0.5, class_names=None):
             count +=1
         elif label != current:
             count = 0 
+        width = int(box[0]) - int(box[0])
+        height = int(box[1]) - int(box[1])
         try:
-            img = add_image(img, emojidict[label][count] ,int(box[0]), int(box[1]) )
+            img = add_image(img, emojidict[label][count] ,int(box[0] + width/2), int(box[1]) )
         except:
             img = add_image(img, emojidict[label][0] ,int(box[0]), int(box[1]) )
 
