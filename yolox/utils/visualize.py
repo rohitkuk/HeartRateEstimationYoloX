@@ -76,13 +76,26 @@ def vid_to_frames(path):
     return frames
 
 emojidict = dict(
-    happy = vid_to_frames('assets/happy.png',cv2.IMREAD_UNCHANGED),
-    sad = vid_to_frames('assets/sad.png',cv2.IMREAD_UNCHANGED),
-    surprised = vid_to_frames('assets/surprised.png',cv2.IMREAD_UNCHANGED)       
+    happy = vid_to_frames('assets/happy.png'),
+    sad = vid_to_frames('assets/sad.png'),
+    surprised = vid_to_frames('assets/surprised.png')       
     )
 current = None
 count = 0
 
+def add_image(img, src2, x, y, ):
+
+    w = 120
+    h = 120
+
+    initial = img[y:y+h,x:x+w]
+    src1 = initial
+
+    src2 = cv2.resize(src2, src1.shape[1::-1])
+
+    dst = cv2.addWeighted(src1, 0.5, src2, 0.5, 0)
+    img[y:y+h,x:x+w] = dst
+    return img
 
 def vis10(img, boxes, scores, cls_ids, conf=0.5, class_names=None):
 
@@ -106,7 +119,8 @@ def vis10(img, boxes, scores, cls_ids, conf=0.5, class_names=None):
 
         print(emojidict[label][count].shape)
         print(img.shape)
-        img = cvzone.overlayPNG(img, emojidict[label][count] ,(int(box[0]), int(box[1])))
+        # img = cvzone.overlayPNG(img, emojidict[label][count] ,(int(box[0]), int(box[1])))
+        img = add_image(img, emojidict[label][count] ,(int(box[0]), int(box[1])))
         current = label
         
     return img
