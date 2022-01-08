@@ -116,14 +116,13 @@ def vis10(img, boxes, scores, cls_ids, conf=0.5, class_names=None):
         if score < conf:
             continue
         label = class_names[cls_id]
-        UI_box2(box, img, color=compute_color_for_labels(cls_id),label=label,line_thickness=2)
+        UI_box(box, img, color=compute_color_for_labels(cls_id),label=label,line_thickness=2)
         if count == len(emojidict[label]):
             count = 0 
         if label == current:
             count +=1
         elif label != current:
             count = 0 
-        # img = cvzone.overlayPNG(img, emojidict[label][count] ,(int(box[0]), int(box[1])))
         try:
             img = add_image(img, emojidict[label][count] ,int(box[0]), int(box[1]) )
         except:
