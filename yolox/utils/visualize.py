@@ -116,7 +116,7 @@ def vis10(img, boxes, scores, cls_ids, conf=0.5, class_names=None):
         if score < conf:
             continue
         label = class_names[cls_id]
-        UI_box(box, img, color=compute_color_for_labels(cls_id),label=label,line_thickness=2)
+        UI_box2(box, img, color=compute_color_for_labels(cls_id),label=label,line_thickness=2)
         if count == len(emojidict[label]):
             count = 0 
         if label == current:
@@ -393,7 +393,7 @@ def UI_box2(x, img, color=None,label=None,line_thickness=None, boundingbox = Tru
     c1, c2 = (int(x[0]), int(x[1])), (int(x[2]), int(x[3]))
     if boundingbox:
         # cv2.rectangle(img, c1, c2, color, 2)
-        img = draw_disconnected_rect(img, c1, c2, color, tl)
+        draw_disconnected_rect(img, c1, c2, color, tl)
     if label:
         tf = max(tl - 1, 1)  # font thickness
         t_size = cv2.getTextSize(label, 0, fontScale=tl / 3, thickness=tf)[0]
