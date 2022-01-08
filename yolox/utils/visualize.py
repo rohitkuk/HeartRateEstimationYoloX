@@ -84,8 +84,8 @@ current = None
 count = 0
 
 def add_image(img, src2, x, y, ):
-    x=  x+100
-    y = y+100
+    x=  x+90
+    y = y-10
     w = 80
     h = 80
 
