@@ -101,7 +101,7 @@ def add_image(img, src2, x, y, ):
     # src2[np.where((src2 ==[0,0,0]).all(axis=2))] = [255,255,255]
     # dst = cv2.bitwise_and(src1, src2)
     # dst = cv2.addWeighted(src1, 0.2, src2, 0.8, 0)
-    img[y:y+h,x:x+w] = dst
+    img[y:y+h,x:x+w] = f
     return img
 
 def vis10(img, boxes, scores, cls_ids, conf=0.5, class_names=None):
