@@ -85,15 +85,15 @@ count = 0
 
 def add_image(img, src2, x, y, ):
 
-    w = 120
-    h = 120
+    w = 80
+    h = 80
 
     initial = img[y:y+h,x:x+w]
     src1 = initial
 
     src2 = cv2.resize(src2, src1.shape[1::-1])
 
-    dst = cv2.addWeighted(src1, 0.5, src2, 0.5, 0)
+    dst = cv2.addWeighted(src1, 0.2, src2, 0.8, 0)
     img[y:y+h,x:x+w] = dst
     return img
 
