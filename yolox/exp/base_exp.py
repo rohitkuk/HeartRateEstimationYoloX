@@ -19,7 +19,7 @@ class BaseExp(metaclass=ABCMeta):
 
     def __init__(self):
         self.seed = None
-        self.output_dir = f"{os.environ['OUT_DIR']}/YOLOX_outputs"
+        self.output_dir = os.path.join(os.environ['OUT_DIR'],'YOLOX_outputs')
         self.print_interval = 100
         self.eval_interval = 10
 
