@@ -78,7 +78,7 @@ class Predictor():
 
 if __name__=='__main__':
     model='/content/YOLOX/exps/example/yolox_voc/yolox_voc_s.py'
-    ckpt='/content/YOLOX/YOLOX_outputs/yolox_voc_s/latest_ckpt.pth.tar'
+    ckpt='/content/gdrive/MyDrive/HeartRateEstimation/YOLOX_outputs/yolox_voc_s/latest_ckpt.pth.tar'
     detector = Predictor(model, ckpt)
 
     cap = cv2.VideoCapture(sys.argv[1]) 
